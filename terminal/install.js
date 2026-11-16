@@ -88,4 +88,6 @@ for (const ev of EVENTS) {
   (settings.hooks[ev] = settings.hooks[ev] || []).push({ hooks: [hook] });
 }
 fs.writeFileSync(SETTINGS, JSON.stringify(settings, null, 2) + '\n');
-console.log(`Installed. You are a LV 1 ${cfg.class}. Restart Claude Code to see the status line.`);
+// a reinstall keeps your level: report the saved one, not LV 1
+const hero = (readJson(path.join(DEST, 'state.json')) || {}).hero || {};
+console.log(`Installed. You are a LV ${hero.lvl || 1} ${cfg.class}. Restart Claude Code to see the status line.`);

@@ -5,6 +5,7 @@
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
+const crypto = require('crypto');
 
 const DIR = process.env.BCB_DIR || path.join(os.homedir(), '.claude', 'bcb');
 const FILE = path.join(DIR, 'state.json');
@@ -50,31 +51,84 @@ function save(s) {
 
 // Hooks can fire at the same time (PostToolUse is async), so a plain
 // load -> change -> save from two processes loses one of the changes.
-// update() holds a lock directory around the whole thing; mkdir is atomic
-// on every platform, so only one process can own it at a time.
-const LOCK = FILE + '.lock';
-const LOCK_STALE = 3000; // a hook is killed at 5s; anything older than this is a dead owner
-const LOCK_WAIT = 2500;
+// update() holds a lock around the whole thing.
+//
+// How the lock works:
+// - Each process writes its own ticket file (pid + time), then hard-links it
+//   to the lock name. link() is atomic and fails if the name exists, so only
+//   one process wins. The lock and the winner's ticket are the same inode.
+// - A lock is only taken over when its owner process has exited (or it is far
+//   older than any hook can live). Age alone never steals a live hook's lock.
+// - Takeovers happen one at a time under a second "reclaim" lock, and the
+//   stale lock is re-checked (same inode, owner still gone) right before it is
+//   removed, so a fresh lock someone just took can't be deleted by mistake.
+// - unlock() removes the lock only if it is still our inode.
+const LOCK = FILE + '.lk';
+const RECLAIM = FILE + '.lk-reclaim';
+const LOCK_WAIT = 2500;   // give up (drop the change) after this long
+const MAX_AGE = 30000;    // hooks are killed at 5s; older than this can't be a live hook
 const sleep = (ms) => Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
 
-function lock() {
+function alive(pid) {
+  if (!Number.isInteger(pid) || pid <= 0) return false;
+  try { process.kill(pid, 0); return true; } catch (e) { return e.code === 'EPERM'; }
+}
+// What a lock name points at right now: its inode, and whether its owner is gone.
+function probe(name) {
+  let ino, info;
+  try {
+    ino = fs.statSync(name).ino;
+    info = JSON.parse(fs.readFileSync(name, 'utf8'));
+  } catch (e) { return ino === undefined ? null : { ino, dead: false }; } // mid-read: assume live
+  if (!info || !info.pid || !info.t) return { ino, dead: false };
+  return { ino, dead: !alive(info.pid) || Date.now() - info.t > MAX_AGE };
+}
+function link(ticket, name) {
+  try { fs.linkSync(ticket, name); return true; } catch (e) { if (e.code === 'EEXIST') return false; throw e; }
+}
+// Remove name only if it is still the inode we checked.
+function unlinkIf(name, ino) {
+  try { if (fs.statSync(name).ino === ino) fs.unlinkSync(name); } catch (e) { /* already gone */ }
+}
+
+function reclaim(ticket, mine) {
+  if (!link(ticket, RECLAIM)) {
+    // someone else is reclaiming; only clear their reclaim lock if they died holding it
+    const r = probe(RECLAIM);
+    if (r && r.dead) unlinkIf(RECLAIM, r.ino);
+    return;
+  }
+  try {
+    // re-check under the reclaim lock: only this process can remove a stale LOCK now,
+    // and a live owner only ever removes its own inode
+    const p = probe(LOCK);
+    if (p && p.dead) unlinkIf(LOCK, p.ino);
+  } finally { unlinkIf(RECLAIM, mine); }
+}
+
+function lock(ticket, mine) {
   const until = Date.now() + LOCK_WAIT;
   for (;;) {
-    try { fs.mkdirSync(LOCK); return true; } catch (e) { if (e.code !== 'EEXIST') throw e; }
-    try { if (Date.now() - fs.statSync(LOCK).mtimeMs > LOCK_STALE) fs.rmdirSync(LOCK); } catch (e) { /* gone already */ }
+    if (link(ticket, LOCK)) return true;
+    const p = probe(LOCK);
+    if (p && p.dead) reclaim(ticket, mine);
     if (Date.now() > until) return false;
     sleep(5 + Math.floor(Math.random() * 10));
   }
 }
-function unlock() { try { fs.rmdirSync(LOCK); } catch (e) { /* already gone */ } }
 
 // Run fn(state) under the lock and save the result. Returns false if the
 // lock never came free; the change is then dropped rather than clobbering.
 function update(fn) {
   fs.mkdirSync(DIR, { recursive: true });
-  if (!lock()) return false;
-  try { const s = load(); fn(s); save(s); return true; }
-  finally { unlock(); }
+  const ticket = FILE + '.' + process.pid + '.' + crypto.randomBytes(4).toString('hex') + '.ticket';
+  fs.writeFileSync(ticket, JSON.stringify({ pid: process.pid, t: Date.now() }));
+  const mine = fs.statSync(ticket).ino;
+  try {
+    if (!lock(ticket, mine)) return false;
+    try { const s = load(); fn(s); save(s); return true; }
+    finally { unlinkIf(LOCK, mine); } // release only our own lock
+  } finally { try { fs.unlinkSync(ticket); } catch (e) { /* gone */ } }
 }
 
 function session(s, id) {

@@ -6,8 +6,11 @@ const st = require('./bcb-state');
 
 const TESTS = /\b(test|tests|jest|vitest|pytest|mocha|spec|ci)\b/i;
 
-function handle(ev) {
-  const s = st.load();
+// load -> change -> save happens inside st.update, under a lock, so hooks
+// that fire at the same time can't overwrite each other's changes.
+function handle(ev) { st.update((s) => apply(s, ev)); }
+
+function apply(s, ev) {
   const name = ev.hook_event_name;
   const ses = st.session(s, ev.session_id);
   const now = Date.now();
@@ -66,7 +69,6 @@ function handle(ev) {
     default:
       return;
   }
-  st.save(s);
 }
 
 let raw = '';

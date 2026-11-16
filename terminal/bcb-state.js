@@ -1,5 +1,6 @@
 // Shared state for the Black Code Bright terminal party.
-// One small JSON file in ~/.claude/bcb/state.json, written atomically.
+// One small JSON file in ~/.claude/bcb/state.json, written atomically and
+// changed under a lock so hooks that fire together never lose updates.
 'use strict';
 const fs = require('fs');
 const path = require('path');
@@ -47,6 +48,35 @@ function save(s) {
   fs.renameSync(tmp, FILE);
 }
 
+// Hooks can fire at the same time (PostToolUse is async), so a plain
+// load -> change -> save from two processes loses one of the changes.
+// update() holds a lock directory around the whole thing; mkdir is atomic
+// on every platform, so only one process can own it at a time.
+const LOCK = FILE + '.lock';
+const LOCK_STALE = 3000; // a hook is killed at 5s; anything older than this is a dead owner
+const LOCK_WAIT = 2500;
+const sleep = (ms) => Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
+
+function lock() {
+  const until = Date.now() + LOCK_WAIT;
+  for (;;) {
+    try { fs.mkdirSync(LOCK); return true; } catch (e) { if (e.code !== 'EEXIST') throw e; }
+    try { if (Date.now() - fs.statSync(LOCK).mtimeMs > LOCK_STALE) fs.rmdirSync(LOCK); } catch (e) { /* gone already */ }
+    if (Date.now() > until) return false;
+    sleep(5 + Math.floor(Math.random() * 10));
+  }
+}
+function unlock() { try { fs.rmdirSync(LOCK); } catch (e) { /* already gone */ } }
+
+// Run fn(state) under the lock and save the result. Returns false if the
+// lock never came free; the change is then dropped rather than clobbering.
+function update(fn) {
+  fs.mkdirSync(DIR, { recursive: true });
+  if (!lock()) return false;
+  try { const s = load(); fn(s); save(s); return true; }
+  finally { unlock(); }
+}
+
 function session(s, id) {
   const k = id || 'default';
   if (!s.sessions[k]) s.sessions[k] = { party: {}, conds: {}, tasks: { made: 0, done: 0 }, t: Date.now() };
@@ -65,4 +95,4 @@ function gainXp(s, n) {
   while (h.xp >= need(h.lvl)) { h.xp -= need(h.lvl); h.lvl++; h.flash = Date.now(); }
 }
 
-module.exports = { DIR, FILE, CONFIG, load, save, session, config, classFor, gainXp, need };
+module.exports = { DIR, FILE, CONFIG, load, save, update, session, config, classFor, gainXp, need };

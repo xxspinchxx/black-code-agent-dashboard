@@ -15,7 +15,8 @@ function handle(ev) {
 
   switch (name) {
     case 'SessionStart':
-      if (ev.source !== 'resume') { ses.party = {}; ses.conds = {}; ses.tasks = { made: 0, done: 0 }; }
+      // only a fresh start or /clear wipes the party; resume and compact keep it
+      if (ev.source === 'startup' || ev.source === 'clear') { ses.party = {}; ses.conds = {}; ses.tasks = { made: 0, done: 0 }; }
       if (ev.source === 'compact') ses.rest = now; // compacting = a long rest
       break;
     case 'PreCompact':

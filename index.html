@@ -207,6 +207,34 @@ td.r,th.r{text-align:right;white-space:nowrap}
 .sess{color:var(--muted);align-self:center;white-space:nowrap}
 .ctrl .mlist{min-width:26ch}
 @media (min-width:900px){.ghgrid{grid-template-columns:minmax(0,1.3fr) minmax(0,1fr)}}
+/* d&d layer: hp, conditions, spellbook, bestiary */
+.t-cond{background:transparent;color:var(--white);box-shadow:inset 0 0 0 1px var(--gray-300);font-weight:400;text-transform:lowercase}
+.hp{grid-column:1/-1;display:flex;gap:8px;align-items:center;color:var(--muted);white-space:nowrap}
+.hp .hb{flex:1 1 40px;height:4px;background:var(--gray-900);overflow:hidden}
+.hp .hb i{display:block;height:100%;background:var(--white);transition:width .4s}
+.hb i.low{background:var(--yellow)!important}.hb i.crit{background:var(--red)!important}
+.hp .cd{display:flex;gap:4px;overflow:hidden}
+.sgrid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,420px);gap:16px;margin-top:16px;align-items:start}
+.spells{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:8px}
+.spell{display:flex;flex-direction:column;gap:6px;padding:8px;border:1px solid var(--border)}
+.spell .sh{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.spell .sn{font-weight:700;color:var(--purple-300);overflow-wrap:anywhere}
+.slots{display:flex;gap:4px}
+.slots i{width:12px;height:12px;box-shadow:inset 0 0 0 1px var(--purple-300)}
+.slots i.on{background:var(--purple-300)}
+.items{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:4px}
+.mons{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px;align-content:start}
+.mon{display:grid;grid-template-columns:48px minmax(0,1fr);gap:8px 12px;padding:12px;border:1px solid var(--border)}
+.mon.boss{box-shadow:inset 0 0 0 1px var(--red)}
+.mon.slain{opacity:.5}
+.mon .who{flex-wrap:wrap;justify-content:space-between}
+.mon .hb{grid-column:1/-1;height:8px;background:var(--gray-900);overflow:hidden}
+.mon .hb i{display:block;height:100%;background:var(--red);transition:width .4s}
+.mon .mf{grid-column:1/-1;display:flex;justify-content:space-between;gap:8px;align-items:center}
+.msp{grid-row:span 2}
+.msp svg{width:48px;height:48px;shape-rendering:crispEdges;display:block}
+.msp .o{fill:var(--c)}.msp .f{fill:var(--Black)}
+.msp.live svg{animation:bob 1s steps(1,end) infinite}
 /* cheat sheet: sections flow into as many columns as fit */
 .cols{columns:3 380px;column-gap:12px}
 .cs{break-inside:avoid;margin:0 0 12px}
@@ -242,7 +270,8 @@ body{overflow:hidden}
 .arena{min-height:0;flex:1 0 auto}
 #hBox{grid-area:hist;margin:0;min-height:0}
 #vHelp{overflow:auto;padding-right:4px}
-#vGh:not([hidden]){overflow:auto}
+#vGh:not([hidden]),#vSpells:not([hidden]),#vBest:not([hidden]){overflow:auto}
+#vSpells .sgrid,#vBest .sgrid{margin:0}
 #vGh .ghgrid{margin:0}
 #hBox .scroll{flex:1;min-height:0;overflow:auto}
 #hBox thead th{position:sticky;top:0;background:var(--bg);z-index:1}
@@ -251,7 +280,7 @@ body{overflow:hidden}
 #vAgents .main{grid-template-columns:minmax(0,1fr) minmax(320px,26%) minmax(360px,440px);grid-template-rows:minmax(0,1fr);grid-template-areas:"agents log pane"}
 #vChecks:not([hidden]){grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(320px,420px);grid-template-rows:minmax(0,1fr);grid-template-areas:"roll hist sheet"}
 }
-@media (max-width:899px){.main,.cgrid{grid-template-columns:minmax(0,1fr)}.pane{position:static}}
+@media (max-width:899px){.main,.cgrid,.sgrid{grid-template-columns:minmax(0,1fr)}.pane{position:static}}
 @media (max-width:600px){.arena{gap:12px}.die{width:120px;height:120px}.die.dim{width:84px;height:84px}.stack thead{display:none}.stack tr{display:grid;padding-block:8px;border-bottom:1px solid var(--gray-900)}.stack td{display:flex;justify-content:space-between;gap:12px;border:0;padding:2px 0}.stack td::before{content:attr(data-l);color:var(--muted)}}
 @media (max-width:600px){.top{grid-template-columns:minmax(0,1fr)}.ctrl{justify-content:flex-start}.task{grid-template-columns:4ch minmax(0,1fr) 8ch 5ch}}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}.spin::before{content:"*"}.dots::after{content:"..."}}
@@ -288,6 +317,8 @@ body{overflow:hidden}
   <nav class="nav" aria-label="Screens">
     <button class="btn sm on" type="button" data-v="agents" aria-current="page">agents</button>
     <button class="btn sm" type="button" data-v="checks">skill checks</button>
+    <button class="btn sm" type="button" data-v="spells">spellbook</button>
+    <button class="btn sm" type="button" data-v="best">bestiary</button>
     <button class="btn sm" type="button" data-v="github">github</button>
     <button class="btn sm" type="button" data-v="help">cheat sheet</button>
   </nav>
@@ -320,6 +351,8 @@ body{overflow:hidden}
         <span class="menu"><button class="btn sm" type="button" id="mbtn" aria-haspopup="menu" aria-expanded="false" aria-controls="mlist">actions v</button>
           <span class="mlist" id="mlist" role="menu" hidden>
             <button type="button" role="menuitem" data-m="check">roll a skill check...</button>
+            <button type="button" role="menuitem" data-m="spells">open spellbook...</button>
+            <button type="button" role="menuitem" data-m="rest">long rest</button>
             <hr>
             <button type="button" role="menuitem" data-m="pause">pause</button>
             <button type="button" role="menuitem" data-m="resume">resume</button>
@@ -398,6 +431,43 @@ body{overflow:hidden}
     </div>
   </section>
 
+  <section class="view" id="vSpells" aria-label="Spellbook" hidden>
+    <div class="sgrid">
+      <div class="box">
+        <div class="ghrow">
+          <label class="fld" style="flex:1 1 180px"><span>caster</span><span class="ddw"><select class="dd" id="spAgent"></select></span></label>
+          <label class="fld" style="flex:1 1 180px"><span>target</span><span class="ddw"><select class="dd" id="spTarget"></select></span></label>
+          <button class="btn" type="button" id="spRest">[long rest]</button>
+        </div>
+        <div class="rline" id="spMsg" aria-live="polite"><span class="m">pick a caster and a target, then cast. spells use a slot; cantrips are free.</span></div>
+        <div class="spells" id="spList"></div>
+      </div>
+      <div class="box">
+        <div class="phead"><span class="ptitle" id="spName"></span><span class="tag t-paused" id="spClass"></span></div>
+        <div class="mrow"><span class="lbl">spell slots</span><span class="slots" id="spSlots"></span></div>
+        <div class="mrow"><span class="lbl">hp &middot; context left</span><span id="spHp"></span></div>
+        <div class="track"><span class="seg" id="spHpBar" style="background:var(--white)"></span></div>
+        <div class="lbl">conditions</div><div id="spCond"></div>
+        <div class="lbl">items &middot; connected tools</div><ul class="items" id="spItems"></ul>
+        <div class="m">Spells are the agent's skills and tools. Slots: 1 + half its level. A long rest refills slots and compacts the context (restores HP), but the agent sits out a few turns.</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="view" id="vBest" aria-label="Bestiary" hidden>
+    <div class="sgrid">
+      <div class="box"><div class="hhead"><span class="lbl">bestiary</span><span class="m" id="bSum"></span></div><div class="mons" id="mons"></div></div>
+      <div class="box">
+        <div class="phead"><span class="ptitle">summon from github</span></div>
+        <div class="ghrow"><label class="fld"><span>issue number</span><input class="inp" id="bNum" inputmode="numeric" placeholder="12" style="width:10ch"></label><button class="btn go" type="button" id="bSummon">[summon]</button></div>
+        <div class="ghmsg" id="bMsg"></div>
+        <div class="lbl">how it works</div>
+        <div class="m">Bugs and issues are monsters. CR comes from labels: critical or p0 = <span class="n">8</span>, bug = <span class="n">4</span>, anything else = <span class="n">2</span>. Bosses (CR <span class="n">10</span>+) are milestones. Send agents to fight: each gets a <span class="k">slay</span> task, and the monster's HP drops as those tasks progress. A kill drops loot: <span class="n">25</span> xp per CR to everyone who fought.</div>
+        <div class="lbl">loot</div><ul class="log" id="loot" style="height:auto;max-height:200px"></ul>
+      </div>
+    </div>
+  </section>
+
   <section class="view" id="vGh" aria-label="GitHub" hidden>
     <div class="ghgrid">
       <div class="box">
@@ -441,13 +511,17 @@ body{overflow:hidden}
           <tr><td><span class="k">issue</span> <span class="n">12</span></td><td>reads issue #12 from GitHub, gives it as a task</td><td class="m">connected</td></tr>
           <tr><td><span class="k">pr</span> <span class="n">3</span></td><td>reads pull request #3, gives it as a task</td><td class="m">connected</td></tr>
           <tr><td class="k">branches</td><td>loads branches and switches to live</td><td class="m">connected</td></tr>
+          <tr><td class="k">rest</td><td>long rest: refills slots, restores HP</td><td class="m">any time</td></tr>
+          <tr><td><span class="k">cast</span> <span class="p">spell</span></td><td>casts one of its spells on itself</td><td class="m">has a slot</td></tr>
           <tr><td class="m">anything else</td><td>becomes a new task after a think</td><td class="m">any time</td></tr>
         </tbody></table>
       </div>
       <div class="box cs">
         <div class="lbl">buttons, menus, keys</div>
         <table><thead><tr><th>control</th><th>does</th></tr></thead><tbody>
-          <tr><td>screen buttons</td><td>switch screens (<span class="p">#agents</span>, <span class="p">#checks</span>, <span class="p">#github</span>, <span class="p">#help</span>)</td></tr>
+          <tr><td>screen buttons</td><td>switch screens (<span class="p">#agents</span>, <span class="p">#checks</span>, <span class="p">#spells</span>, <span class="p">#bestiary</span>, <span class="p">#github</span>, <span class="p">#help</span>)</td></tr>
+          <tr><td>send agent v</td><td>on a monster: gives that agent a slay task</td></tr>
+          <tr><td>[summon]</td><td>turns a GitHub issue into a monster</td></tr>
           <tr><td>[+] spawn agent</td><td>adds an agent, cycling roles, up to <span class="n">12</span></td></tr>
           <tr><td>pause all</td><td>pauses or resumes every agent not done</td></tr>
           <tr><td>speed</td><td>cycles <span class="n">1x</span>, <span class="n">2x</span>, <span class="n">4x</span></td></tr>
@@ -496,6 +570,23 @@ body{overflow:hidden}
           <tr><td>pair partner</td><td><span class="n">+1</span> every skill</td></tr>
         </tbody></table>
         <div class="m">Quests count tasks the whole party finishes. When the bar fills, press [party check]: each working agent rolls its main skill vs the quest DC; half or more passing completes it.</div>
+      </div>
+      <div class="box cs">
+        <div class="lbl">classes, hp, conditions</div>
+        <table><thead><tr><th>role</th><th>class</th></tr></thead><tbody>
+          <tr><td>planner</td><td class="k">wizard</td></tr><tr><td>builder</td><td class="k">fighter</td></tr><tr><td>tester</td><td class="k">rogue</td></tr>
+          <tr><td>reviewer</td><td class="k">cleric</td></tr><tr><td>deployer</td><td class="k">paladin</td></tr><tr><td>scout</td><td class="k">ranger</td></tr>
+        </tbody></table>
+        <div>HP is the context left: <span class="n">200,000</span> tokens minus what's used. Yellow under <span class="n">25%</span>, red under <span class="n">10%</span>.</div>
+        <table><thead><tr><th>condition</th><th>means</th></tr></thead><tbody>
+          <tr><td><span class="tag t-cond">charmed</span></td><td>waiting on you to approve</td></tr>
+          <tr><td><span class="tag t-cond">poisoned</span></td><td>tests or checks failing</td></tr>
+          <tr><td><span class="tag t-cond">restrained</span></td><td>blocked by an error</td></tr>
+          <tr><td><span class="tag t-cond">exhausted</span></td><td>rate limited or HP under <span class="n">15%</span></td></tr>
+          <tr><td><span class="tag t-cond">asleep</span></td><td>paused</td></tr>
+          <tr><td><span class="tag t-cond">concentrating</span></td><td>thinking</td></tr>
+        </tbody></table>
+        <div class="m">Cure spells (rogue, cleric) retry a poisoned or restrained ally. Lay on Hands (paladin) restores an ally's HP.</div>
       </div>
       <div class="box cs">
         <div class="lbl">black code bright classes</div>
@@ -553,9 +644,59 @@ const QUESTS=[['ship auth refresh',10,14],['squash the flaky tests',14,15],['lau
 let quest={i:0,done:4,extra:0,msg:'',custom:null};
 let live=null; /* {repo, synced} when the session is built from GitHub */
 
+/* ---- d&d layer: classes, hp, conditions, spells, monsters ---- */
+const CLASS={planner:'wizard',builder:'fighter',tester:'rogue',reviewer:'cleric',deployer:'paladin',scout:'ranger'};
+/* [name, level (0 = cantrip), what it does, effect: number = task +%, 'cure' = retry a failed ally, 'heal' = restore an ally's hp] */
+const SPELLS={
+  planner:[['Read',0,'reads the brief into memory',5],['Grep',0,'finds every mention of a name',5],['brainstorming',1,'shapes the idea before work',20],['writing-plans',2,'turns the idea into steps',30]],
+  builder:[['Read',0,'reads the code it will change',5],['Edit',0,'one small, precise change',5],['Write',1,'writes a whole file',20],['Bash',2,'runs the build',30]],
+  tester:[['Grep',0,'hunts down the failing case',5],['Bash',1,'runs the test suite',20],['systematic-debugging',2,'finds the root cause: cures a poisoned or restrained ally','cure']],
+  reviewer:[['Read',0,'reads the diff line by line',5],['code-review',1,'a full review pass',20],['Lesser Restoration',2,'cures a poisoned or restrained ally','cure']],
+  deployer:[['Bash',0,'checks the build is green',5],['deploy-checklist',1,'runs the release checklist',20],['Lay on Hands',2,'compacts an ally\'s context: restores HP','heal']],
+  scout:[['WebSearch',0,'a quick look around',5],['WebFetch',1,'reads a page in full',20],['Context7',2,'fetches current library docs',30]]};
+const ITEMS={planner:[['Graphify','map of the codebase'],['Claude Docs','shared scrolls']],builder:[['GitHub','forge'],['Context7','tome of APIs']],tester:[['GitHub','forge']],reviewer:[['GitHub','forge'],['Graphify','map of the codebase']],deployer:[['GitHub','forge'],['Zapier','sending stones']],scout:[['Exa','scrying orb'],['Context7','tome of APIs']]};
+const hpPct=a=>Math.max(0,Math.round((1-tot(a)/LIMIT)*100));
+const maxSlots=a=>1+Math.floor(a.lvl/2);
+function cond(a){const c=[],h=hpPct(a);
+  if(a.state==='waiting')c.push('charmed');
+  if(a.state==='failed'){const f=(a.fail||FAIL[a.role])+' '+a.notes.map(n=>n.text).join(' ');c.push(/rate limit|context/i.test(f)?'exhausted':/test|ci\b|health|check|fumble/i.test(f)?'poisoned':'restrained')}
+  if(a.state==='paused')c.push('asleep');if(a.state==='thinking')c.push('concentrating');
+  if(h<15&&!c.includes('exhausted'))c.push('exhausted');return c}
+const condTags=a=>cond(a).map(c=>'<span class="tag t-cond">'+c+'</span>').join(' ');
+const hpCls=p=>p<10?'crit':p<25?'low':'';
+function rest(a){a.su=0;const was=tot(a);a.tok={i:Math.round(a.tok.i*.3),o:Math.round(a.tok.o*.3),c:0};
+  if(a.state==='failed'&&/context/i.test(a.notes.map(n=>n.text).join(' '))){a.notes=a.notes.filter(n=>n.kind!=='critical');const t=cur(a);if(t)t.s='running';a.state='running'}
+  if(a.state==='running'){a.state='thinking';a.think=6;a.reply='is back from a long rest'}
+  log(nm(a)+' takes a <b>long rest</b>: slots refilled, HP <span class="n">'+Math.round((1-was/LIMIT)*100)+'%</span> &rarr; <span class="n">'+hpPct(a)+'%</span>');dirty=true;render();return true}
+function cast(a,sp,tg){const [n,lv,,fx]=sp;tg=tg||a;
+  if(lv&&a.su>=maxSlots(a))return 'no spell slots left: take a long rest';
+  if(['failed','paused'].includes(a.state))return a.name+' is '+cond(a).join(', ')+' and cannot cast';
+  if(fx==='cure'){if(tg.state!=='failed')return tg.name+' is not poisoned or restrained';tg.fail='';act(tg,'retry')}
+  else if(fx==='heal'){if(hpPct(tg)>=90)return tg.name+' is already at full HP';tg.tok={i:Math.round(tg.tok.i*.3),o:Math.round(tg.tok.o*.3),c:0}}
+  else{const t=cur(tg);if(!t||!['running','thinking','waiting'].includes(tg.state))return tg.name+' has no task in progress';t.p=Math.min(99,t.p+fx)}
+  if(lv)a.su++;if(lv)xp(a,10);
+  log(nm(a)+' casts <span class="k">'+esc(n)+'</span>'+(lv?' <span class="m">(level '+lv+')</span>':' <span class="m">(cantrip)</span>')+(tg!==a?' on '+nm(tg):'')+': '+(fx==='cure'?'cured':fx==='heal'?'HP restored to <span class="n">'+hpPct(tg)+'%</span>':'task <span class="n">+'+fx+'%</span>'));
+  dirty=true;render();return ''}
+let mons=[],mseq=0,loot=[];
+const MSEED=[['Flaky Test Gremlin','bug',3],['Null Pointer Wraith','bug',5],['Memory Leak Ooze','bug',4],['Race Condition Doppelganger','bug',7],['Stale Cache Mimic','issue',2],['The Legacy Monolith','milestone',12]];
+function mkMon(name,kind,cr,url){return {id:mseq++,name:String(name).slice(0,60),kind,cr,url:url||'',slain:false}}
+const isBoss=m=>m.kind==='milestone'||m.cr>=10;
+const slayTasks=m=>agents.flatMap(a=>a.tasks.filter(t=>t.mon===m.id).map(t=>({a,t})));
+function monHp(m){if(m.slain)return 0;const ts=slayTasks(m);if(!ts.length)return 100;return Math.max(1,Math.round(100-ts.reduce((s,x)=>s+x.t.p,0)/ts.length))}
+function sendMon(m,a){if(!m||!a||m.slain)return;if(a.tasks.some(t=>t.mon===m.id&&t.s!=='done'))return;
+  a.tasks.push({n:'slay '+m.name,p:0,s:'queued',mon:m.id});if(a.state==='done'){a.state='running';a.tasks[a.tasks.length-1].s='running'}
+  a.notes=a.notes.filter(n=>!/nothing from/.test(n.text));log(nm(a)+' charges <b class="er">'+esc(m.name)+'</b> <span class="m">CR '+m.cr+'</span>');dirty=true;render()}
+function checkMon(id){const m=mons.find(x=>x.id===id);if(!m||m.slain)return;const ts=slayTasks(m);if(!ts.length||ts.some(x=>x.t.s!=='done'))return;
+  m.slain=true;const who=[...new Set(ts.map(x=>x.a))],gain=m.cr*25;who.forEach(a=>xp(a,gain));
+  const line='<b class="pr">SLAIN</b> <span class="er">'+esc(m.name)+'</span> by '+who.map(nm).join(', ')+': <span class="n">+'+gain+'</span> xp each';
+  log(line);loot.unshift('<span class="m">'+now()+'</span> '+line);loot=loot.slice(0,30);dirty=true}
+function seedMons(){mons=[];mseq=0;loot=[];MSEED.forEach(x=>mons.push(mkMon(...x)));mons[4].slain=true;loot.push('<span class="m">earlier</span> <b class="pr">SLAIN</b> <span class="er">Stale Cache Mimic</span> by <span class="k">scout</span>: <span class="n">+50</span> xp')}
+function msprite(m){const eyes=m.slain?'<rect class="f" x="3" y="6" width="2" height="1"/><rect class="f" x="7" y="6" width="2" height="1"/>':'<rect class="f" x="3" y="5" width="2" height="2"/><rect class="f" x="7" y="5" width="2" height="2"/>';
+  return '<svg viewBox="0 0 12 12" aria-hidden="true"><rect class="o" x="2" y="1" width="1" height="2"/><rect class="o" x="9" y="1" width="1" height="2"/><rect class="o" x="1" y="3" width="10" height="7"/><rect class="o" x="1" y="10" width="2" height="1"/><rect class="o" x="5" y="10" width="2" height="1"/><rect class="o" x="9" y="10" width="2" height="1"/>'+eyes+'<rect class="f" x="4" y="8" width="4" height="1"/><rect class="o" x="5" y="8" width="1" height="1"/></svg>'}
+
 function mk(role,i){
   const tasks=ROLES[role].map(n=>({n,p:0,s:'queued'}));
-  const a={id:seq++,name:role+(i>1?'-'+i:''),role,state:'running',tasks,tok:{i:r(2000,9000),o:r(500,3000),c:r(0,2000)},notes:[],t0:now(),think:0,el:null,last:'',xp:0,lvl:1,bonus:{},gear:[ROLEGEAR[role],''],flash:0};
+  const a={id:seq++,name:role+(i>1?'-'+i:''),role,state:'running',tasks,tok:{i:r(2000,9000),o:r(500,3000),c:r(0,2000)},notes:[],t0:now(),think:0,el:null,last:'',xp:0,lvl:1,bonus:{},gear:[ROLEGEAR[role],''],flash:0,su:0};
   tasks[0].s='running';return a;
 }
 function cur(a){return a.tasks.find(t=>t.s==='running'||t.s==='changed'||t.s==='failed')||a.tasks.find(t=>t.s==='queued')}
@@ -593,7 +734,7 @@ function doing(a){const t=cur(a);
 function pct(a){const t=cur(a);if(a.state==='done')return[a.tasks.length?'100%':'',''];if(a.state==='running')return[(t?t.p:0)+'%','pr'];if(a.state==='paused')return[(t?t.p:0)+'%','m'];return['','']}
 function card(a){
   if(!a.el){a.el=document.createElement('button');a.el.type='button';a.el.className='card';a.el.dataset.id=a.id;
-    a.el.innerHTML='<div class="spr"></div><div class="who"><span class="name"></span><span class="tg"></span></div><div class="role"></div><div class="doing"><span class="dl"></span><span class="dp"></span></div><div class="bar"><i></i></div><div class="xp"><i></i></div><div class="foot"><span class="ft"></span><span class="fk"></span></div>';
+    a.el.innerHTML='<div class="spr"></div><div class="who"><span class="name"></span><span class="tg"></span></div><div class="role"></div><div class="doing"><span class="dl"></span><span class="dp"></span></div><div class="bar"><i></i></div><div class="xp"><i></i></div><div class="hp"><span>HP</span><span class="hb"><i></i></span><span class="hv"></span><span class="cd"></span></div><div class="foot"><span class="ft"></span><span class="fk"></span></div>';
     $('agents').append(a.el)}
   const e=a.el,q=s=>e.querySelector(s);
   const fl=a.flash>Date.now(),lk=a.state+(fl?'!':'');
@@ -602,7 +743,8 @@ function card(a){
   const sig=a.state+'|'+(cur(a)||{}).n;
   if(e.dataset.sig!==sig){e.dataset.sig=sig;q('.dl').innerHTML=doing(a)}
   const [pv,pc]=pct(a),dp=q('.dp');dp.textContent=pv;dp.className='dp '+pc;
-  q('.name').textContent=a.name;q('.role').textContent=a.role+' · LV '+a.lvl+' · since '+a.t0;q('.xp i').style.width=Math.round(a.xp/need(a.lvl)*100)+'%';
+  q('.name').textContent=a.name;q('.role').textContent='LV '+a.lvl+' '+CLASS[a.role]+' · '+a.role;
+  const hp=hpPct(a),hi=q('.hp .hb i');hi.style.width=hp+'%';hi.className=hpCls(hp);q('.hv').textContent=hp+'%';const cs=cond(a).join();if(e.dataset.cs!==cs){e.dataset.cs=cs;q('.cd').innerHTML=condTags(a)}q('.xp i').style.width=Math.round(a.xp/need(a.lvl)*100)+'%';
   const t=cur(a),bar=q('.bar i');bar.style.width=(a.state==='done'?(a.tasks.length?100:0):t?t.p:0)+'%';
   bar.style.background={failed:'var(--red)',waiting:'var(--yellow)',paused:'var(--gray-300)',done:'var(--white)',thinking:'var(--purple-300)'}[a.state]||(t&&t.s==='changed'?'var(--orange)':'var(--blu)');
   const d=a.tasks.filter(t=>t.s==='done').length;q('.ft').textContent=d+'/'+a.tasks.length+' tasks';
@@ -620,7 +762,7 @@ function detail(){
   const ns=a.id+JSON.stringify(a.notes);
   if(nsig!==ns){nsig=ns;$('dnotes').innerHTML=a.notes.map((n,i)=>'<div class="note nt-'+n.kind+'"'+(n.kind==='critical'?' role="alert"':'')+'><b>'+esc(n.head)+'</b><span>'+n.text+'</span>'+(n.acts?'<div class="acts">'+n.acts.map(x=>'<button class="btn sm'+(x==='approve'||x==='retry'?' go':'')+'" type="button" data-act="'+x+'">['+x+']</button>').join('')+'</div>':'')+'</div>').join('')}
   const t=cur(a);
-  $('drows').innerHTML='<dt>role</dt><dd class="k">'+a.role+'</dd><dt>state</dt><dd>'+a.state+'</dd><dt>current</dt><dd>'+esc(t&&a.state!=='done'?t.n:'none')+'</dd><dt>started</dt><dd class="m">'+a.t0+'</dd>';
+  $('drows').innerHTML='<dt>class</dt><dd><span class="k">LV '+a.lvl+' '+CLASS[a.role]+'</span> <span class="m">· '+a.role+'</span></dd><dt>hp</dt><dd><span class="n">'+hpPct(a)+'%</span> <span class="m">context left</span></dd><dt>conditions</dt><dd>'+(condTags(a)||'<span class="m">none</span>')+'</dd><dt>spell slots</dt><dd><span class="n">'+(maxSlots(a)-(a.su||0))+'/'+maxSlots(a)+'</span></dd><dt>state</dt><dd>'+a.state+'</dd><dt>current</dt><dd>'+esc(t&&a.state!=='done'?t.n:'none')+'</dd><dt>started</dt><dd class="m">'+a.t0+'</dd>';
   const ts=a.id+a.tasks.map(t=>t.n+t.s).join();
   if(tsig!==ts){tsig=ts;$('dtasks').innerHTML=a.tasks.map(t=>'<li class="task k-'+t.s+'"><span class="tm">'+({done:'[x]',changed:'[~]',failed:'[!]',queued:'[ ]'}[t.s]||'[<span class="spin"></span>]')+'</span><span class="tn">'+esc(t.n)+'</span><span class="tb"><i></i></span><span class="tp"></span></li>').join('')}
   [...$('dtasks').children].forEach((li,i)=>{const t=a.tasks[i];li.querySelector('.tb i').style.width=t.p+'%';li.querySelector('.tp').textContent=t.s==='queued'?'0%':t.p+'%'});
@@ -653,12 +795,12 @@ function partyCheck(){const q=qinfo();if(quest.done<q.goal)return;const team=age
   if(win){team.forEach(a=>xp(a,100));quest.msg='<b class="pr">QUEST COMPLETE</b> '+esc(q.name)+': '+pass+'/'+team.length+' passed, +100 xp each.';log(quest.msg+' <span class="m">'+parts.join(', ')+'</span>');if(quest.custom)quest.custom=null;else quest.i++;quest.done=0;quest.extra=0}
   else{quest.extra+=4;quest.msg='<b class="er">PARTY CHECK FAILED</b> '+pass+'/'+team.length+' passed. Regroup: +4 tasks to the goal.';log(quest.msg+' <span class="m">'+parts.join(', ')+'</span>')}
   dirty=true;renderHist();render()}
-function render(){agents.forEach(card);detail();header();opts();questUI()}
+function render(){agents.forEach(card);detail();header();opts();questUI();if(!$('vSpells').hidden)spellUI();if(!$('vBest').hidden)bestUI()}
 
 /* ---- simulation ---- */
 function advance(a){
   const t=cur(a);if(!t)return;
-  t.s='done';t.p=100;log(nm(a)+' finished <span class="p">'+esc(t.n)+'</span> <span class="m">+40 xp</span>');xp(a,40);questTick();
+  t.s='done';t.p=100;log(nm(a)+' finished <span class="p">'+esc(t.n)+'</span> <span class="m">+40 xp</span>');xp(a,40);questTick();if(t.mon!=null)checkMon(t.mon);
   const nx=a.tasks.find(x=>x.s==='queued');
   if(nx){nx.s='running';if(auto)apply(resolve(a,PRI[a.role],13,'n'),'auto')}else{a.state='done';note(a,'agent','> '+a.name,'all '+a.tasks.length+' tasks done.');log(nm(a)+' is <b>done</b>')}}
 function askText(a,t){if(!live)return ASK[a.role];const n=t.n.replace(/^branch /,'');return {builder:'push to '+n,tester:'run the CI suite on '+n,reviewer:'post review comments on '+n,deployer:'deploy '+n+' to staging',scout:'fetch docs for '+n,planner:'open tickets for '+n}[a.role]||('work on '+n)}
@@ -685,19 +827,21 @@ function act(a,c){
   const t=cur(a);
   if(c==='approve'&&a.state==='waiting'){a.notes=a.notes.filter(n=>n.kind!=='pending');a.state='running';log(nm(a)+' approved: '+esc(a.ask||ASK[a.role])+' <span class="m">+10 xp</span>');xp(a,10)}
   else if(c==='deny'&&a.state==='waiting'){a.notes=a.notes.filter(n=>n.kind!=='pending');a.state='running';log(nm(a)+' denied; '+'<span class="m">continuing without it</span>')}
-  else if(c==='retry'&&a.state==='failed'){a.notes=a.notes.filter(n=>n.kind!=='critical');if(t){t.s='running';t.p=Math.max(0,t.p-20)}if(tot(a)>=LIMIT*.95){a.tok={i:Math.round(a.tok.i*.3),o:Math.round(a.tok.o*.3),c:0};log(nm(a)+' compacted its context')}a.state='running';log(nm(a)+' retrying <span class="p">'+esc(t?t.n:'')+'</span>')}
+  else if(c==='retry'&&a.state==='failed'){a.fail='';a.notes=a.notes.filter(n=>n.kind!=='critical');if(t){t.s='running';t.p=Math.max(0,t.p-20)}if(tot(a)>=LIMIT*.95){a.tok={i:Math.round(a.tok.i*.3),o:Math.round(a.tok.o*.3),c:0};log(nm(a)+' compacted its context')}a.state='running';log(nm(a)+' retrying <span class="p">'+esc(t?t.n:'')+'</span>')}
   else if((c==='pause'||c==='stop')&&a.state!=='done'&&a.state!=='paused'){a.prev=a.state;a.state='paused';log(nm(a)+' <span class="m">paused</span>')}
   else if(c==='resume'&&a.state==='paused'){a.state=a.prev==='thinking'?'running':(a.prev||'running');log(nm(a)+' resumed')}
+  else if(c==='rest')return rest(a);
   else return false;
   render();return true}
 function command(raw){
   const a=agents.find(x=>x.id===sel),s=raw.trim();if(!a||!s)return;
   log('<span class="pr">&gt; '+esc(s)+'</span> <span class="m">to</span> '+nm(a));
   const [w,...rest]=s.split(/\s+/),c=w.toLowerCase();
-  if(c==='help'){log('<span class="m"># commands:</span> <span class="k">pause resume retry approve deny clear</span>, <span class="k">task</span> <span class="p">name</span>, <span class="k">issue</span> <span class="n">12</span>, <span class="k">pr</span> <span class="n">3</span>, <span class="k">branches</span>, or anything else as a message');return}
+  if(c==='help'){log('<span class="m"># commands:</span> <span class="k">pause resume retry approve deny clear</span>, <span class="k">task</span> <span class="p">name</span>, <span class="k">issue</span> <span class="n">12</span>, <span class="k">pr</span> <span class="n">3</span>, <span class="k">branches</span>, <span class="k">rest</span>, <span class="k">cast</span> <span class="p">spell</span>, or anything else as a message');return}
   if(c==='clear'){a.notes=[];render();return}
   if(c==='branches'){location.hash='github';loadBranches();return}
   if((c==='issue'||c==='pr')&&/^#?\d+$/.test(rest[0]||'')){findItem(c,(rest[0]||'').replace('#',''),a);return}
+  if(c==='cast'){const q=rest.join(' ').toLowerCase(),sp=SPELLS[a.role].find(x=>x[0].toLowerCase().startsWith(q));if(!q||!sp){log('<span class="m"># '+esc(a.name)+' knows: '+SPELLS[a.role].map(x=>x[0]).join(', ')+'</span>');return}const err=cast(a,sp,a);if(err)log('<span class="m"># '+esc(err)+'</span>');return}
   if(act(a,c))return;
   if(['pause','resume','retry','approve','deny','stop'].includes(c)){log('<span class="m">'+esc(a.name)+' is '+a.state+'; nothing to '+esc(c)+'</span>');return}
   const name=c==='task'?rest.join(' '):s;
@@ -742,7 +886,8 @@ function opts(){const key=agents.map(a=>a.id+a.name).join();if(opts.k===key)retu
   const keep=$('cAgent').value,hk=$('hFilter').value;
   $('cAgent').innerHTML=agents.map(a=>'<option value="'+a.id+'">'+esc(a.name)+'</option>').join('');
   $('hFilter').innerHTML='<option value="all">all agents</option>'+agents.map(a=>'<option value="'+a.id+'">'+esc(a.name)+'</option>').join('');
-  if(keep)$('cAgent').value=keep;$('hFilter').value=hk||'all'}
+  if(keep)$('cAgent').value=keep;$('hFilter').value=hk||'all';
+  const sk=$('spAgent').value,tk=$('spTarget').value,ol=agents.map(a=>'<option value="'+a.id+'">'+esc(a.name)+'</option>').join('');$('spAgent').innerHTML=ol;$('spTarget').innerHTML=ol;if(sk)$('spAgent').value=sk;if(tk)$('spTarget').value=tk;spsig='';bsig=''}
 function skillOpts(fresh){const a=ca();if(!a)return;const keep=$('cSkill').value;
   $('cSkill').innerHTML=SKILLS.map(s=>{const m=mod(a,s);return '<option value="'+s+'">'+s+' ('+(m>=0?'+':'')+m+')</option>'}).join('');
   $('cSkill').value=!fresh&&keep?keep:PRI[a.role]}
@@ -771,13 +916,55 @@ function doRoll(){if(rolling)return;const a=ca();if(!a)return;
     $('eff').innerHTML='<span class="m">effect:</span> '+esc(rec.eff);
     $('roll').focus()},reduce?0:900)}
 
+/* ---- spellbook screen ---- */
+let spsig='',bsig='';
+const spA=()=>agents.find(x=>String(x.id)===$('spAgent').value)||agents[0];
+const spT=()=>agents.find(x=>String(x.id)===$('spTarget').value)||spA();
+function spellUI(){const a=spA();if(!a)return;const sig=a.id+'|'+a.state+'|'+(a.su||0)+'|'+a.lvl;
+  if(spsig!==sig){spsig=sig;const left=maxSlots(a)-(a.su||0);
+    $('spName').textContent=a.name;$('spClass').textContent='LV '+a.lvl+' '+CLASS[a.role];
+    $('spSlots').innerHTML=Array.from({length:maxSlots(a)},(_,i)=>'<i class="'+(i<left?'on':'')+'" title="slot '+(i+1)+'"></i>').join('');
+    $('spItems').innerHTML=ITEMS[a.role].map(x=>'<li><span class="k">'+esc(x[0])+'</span> <span class="m">&middot; '+esc(x[1])+'</span></li>').join('');
+    $('spList').innerHTML=SPELLS[a.role].map((x,i)=>{const fx=x[3],eff=fx==='cure'?'cure':fx==='heal'?'restore HP':'task +'+fx+'%',no=x[1]&&left<=0;
+      return '<div class="spell"><div class="sh"><span class="sn">'+esc(x[0])+'</span><span class="tag '+(x[1]?'t-thinking':'t-paused')+'">'+(x[1]?'level '+x[1]:'cantrip')+'</span></div><span class="m">'+esc(x[2])+'</span><div class="sh"><span class="n">'+eff+'</span><button class="btn sm'+(no?'':' go')+'" type="button" data-sp="'+i+'"'+(no?' disabled':'')+'>[cast]</button></div></div>'}).join('')}
+  const hp=hpPct(a);$('spHp').innerHTML='<span class="n">'+fmt(Math.max(0,LIMIT-tot(a)))+'</span> <span class="m">/ '+fmt(LIMIT)+'</span> <b>'+hp+'%</b>';
+  const hb=$('spHpBar');hb.style.width=hp+'%';hb.style.background=hp<10?'var(--red)':hp<25?'var(--yellow)':'var(--white)';
+  $('spCond').innerHTML=condTags(a)||'<span class="m">none</span>'}
+$('spAgent').addEventListener('change',()=>{$('spTarget').value=$('spAgent').value;spsig='';spellUI()});
+$('spTarget').addEventListener('change',spellUI);
+$('spRest').addEventListener('click',()=>{const a=spA();if(a){rest(a);spsig='';$('spMsg').innerHTML='<span class="m">'+esc(a.name)+' rests. slots refilled.</span>';spellUI()}});
+$('spList').addEventListener('click',e=>{const b=e.target.closest('[data-sp]');if(!b)return;const a=spA(),sp=SPELLS[a.role][+b.dataset.sp],err=cast(a,sp,spT());spsig='';
+  $('spMsg').innerHTML=err?'<span class="er">! '+esc(err)+'</span>':'<span class="pr">cast</span> <span class="k">'+esc(sp[0])+'</span>';spellUI()});
+
+/* ---- bestiary screen ---- */
+function bestUI(){const sig=mons.map(m=>m.id+(m.slain?'x':'')).join()+'|'+agents.map(a=>a.id+a.name).join()+'|'+mons.map(m=>slayTasks(m).map(x=>x.a.id).join('.')).join();
+  if(bsig!==sig){bsig=sig;const ag='<option value="">send agent</option>'+agents.map(a=>'<option value="'+a.id+'">'+esc(a.name)+' · '+CLASS[a.role]+'</option>').join('');
+    $('mons').innerHTML=mons.map(m=>{const ts=slayTasks(m),who=[...new Set(ts.map(x=>x.a.name))],c=isBoss(m)?'var(--red)':m.cr>=5?'var(--red-300)':'var(--yellow)';
+      return '<div class="mon'+(isBoss(m)?' boss':'')+(m.slain?' slain':'')+'" data-mid="'+m.id+'"><div class="msp'+(m.slain?'':' live')+'" style="--c:'+c+'">'+msprite(m)+'</div><div class="who"><span class="name" style="color:var(--white)">'+esc(m.name)+'</span><span class="tag '+(isBoss(m)?'t-failed':'t-paused')+'">'+(isBoss(m)?'boss · ':'')+'CR '+m.cr+'</span></div><div class="role">'+esc(m.kind)+' · '+(m.slain?'slain':who.length?'fighting '+esc(who.join(', ')):'lurking')+(m.url?' · <a class="p" href="'+esc(m.url)+'" target="_blank" rel="noopener">open</a>':'')+'</div><div class="hb"><i></i></div><div class="mf"><span class="m mhp"></span>'+(m.slain?'<span class="m">+'+m.cr*25+' xp dropped</span>':'<span class="ddw"><select class="dd" data-send="'+m.id+'" aria-label="Send an agent to fight '+esc(m.name)+'">'+ag+'</select></span>')+'</div></div>'}).join('');
+    $('loot').innerHTML=loot.length?loot.map(l=>'<li>'+l+'</li>').join(''):'<li class="m">nothing slain yet</li>'}
+  [...$('mons').children].forEach(el=>{const m=mons.find(x=>x.id===+el.dataset.mid);if(!m)return;const hp=monHp(m);el.querySelector('.hb i').style.width=hp+'%';el.querySelector('.mhp').textContent='HP '+hp+'%'});
+  const alive=mons.filter(m=>!m.slain).length;$('bSum').innerHTML='<span class="n">'+alive+'</span> lurking &middot; <span class="n">'+(mons.length-alive)+'</span> slain'}
+$('mons').addEventListener('change',e=>{const s=e.target.closest('[data-send]');if(!s||!s.value)return;sendMon(mons.find(m=>m.id===+s.dataset.send),agents.find(a=>a.id===+s.value));bsig='';bestUI()});
+async function summon(){const num=$('bNum').value.trim().replace('#',''),msg=$('bMsg');if(!/^\d+$/.test(num)){msg.className='ghmsg er';msg.textContent='Type an issue number, like 12.';return}
+  msg.className='ghmsg';msg.innerHTML='summoning #'+esc(num)+'<span class="dots"></span>';
+  try{const list=await zap('repo_issue','github_find_issue',{repo:repo(),state:'open',search_key:'issue_number',search_value:num});const it=list[0];
+    if(!it){msg.className='ghmsg er';msg.textContent='No open issue #'+num+' in '+repo()+'.';return}
+    const labels=(it.labels||[]).map(l=>String(l&&l.name||l)).join(' '),cr=/crit|p0|sev ?1|blocker/i.test(labels)?8:/bug/i.test(labels)?4:2;
+    const m=mkMon('#'+(it.number||num)+' '+String(it.title||'issue'),'issue',cr,/^https:\/\/github\.com\//.test(it.html_url||'')?it.html_url:'');
+    if(mons.some(x=>x.name===m.name&&!x.slain)){msg.textContent='That one is already in the bestiary.';return}
+    mons.unshift(m);log('<b class="er">SUMMONED</b> '+esc(m.name)+' <span class="m">CR '+cr+'</span> from <span class="p">'+esc(repo())+'</span>');msg.textContent='';dirty=true;bsig='';bestUI()}
+  catch(e){msg.className='ghmsg er';msg.textContent=ghErr(e)}}
+$('bSummon').addEventListener('click',summon);
+$('bNum').addEventListener('keydown',e=>{if(e.key==='Enter')summon()});
+
 /* ---- actions menu ---- */
 const mb=$('mbtn'),ml=$('mlist');
 function mOpen(o){ml.hidden=!o;mb.setAttribute('aria-expanded',String(o));if(!o)return;const a=agents.find(x=>x.id===sel);
-  const ok={check:!!a,pause:a&&!['paused','done'].includes(a.state),resume:a&&a.state==='paused',retry:a&&a.state==='failed',approve:a&&a.state==='waiting',deny:a&&a.state==='waiting',clear:a&&a.notes.length>0};
+  const ok={check:!!a,spells:!!a,rest:!!a,pause:a&&!['paused','done'].includes(a.state),resume:a&&a.state==='paused',retry:a&&a.state==='failed',approve:a&&a.state==='waiting',deny:a&&a.state==='waiting',clear:a&&a.notes.length>0};
   [...ml.querySelectorAll('button')].forEach(b=>b.disabled=!ok[b.dataset.m]);const f=ml.querySelector('button:not(:disabled)');if(f)f.focus()}
 mb.addEventListener('click',e=>{e.stopPropagation();mOpen(ml.hidden)});
 ml.addEventListener('click',e=>{const b=e.target.closest('button');if(!b||b.disabled)return;const a=agents.find(x=>x.id===sel);mOpen(false);if(!a)return;
+  if(b.dataset.m==='spells'){opts();$('spAgent').value=a.id;$('spTarget').value=a.id;spsig='';location.hash='spells';return}
   if(b.dataset.m==='check'){opts();$('cAgent').value=a.id;skillOpts(true);sheet();arenaReset();location.hash='checks';return}
   mb.focus();if(b.dataset.m==='clear'){a.notes=[];render();return}act(a,b.dataset.m)});
 ml.addEventListener('keydown',e=>{const it=[...ml.querySelectorAll('button:not(:disabled)')],i=it.indexOf(document.activeElement);
@@ -786,11 +973,12 @@ ml.addEventListener('keydown',e=>{const it=[...ml.querySelectorAll('button:not(:
 document.addEventListener('click',e=>{if(!ml.hidden&&!e.target.closest('.menu'))mOpen(false)});
 
 /* ---- screens ---- */
-function route(){const m={'#checks':'checks','#help':'help','#github':'github'},v=m[location.hash]||'agents';$('vAgents').hidden=v!=='agents';$('vChecks').hidden=v!=='checks';$('vHelp').hidden=v!=='help';$('vGh').hidden=v!=='github';
+function route(){const m={'#checks':'checks','#help':'help','#github':'github','#spells':'spells','#bestiary':'best'},v=m[location.hash]||'agents';$('vSpells').hidden=v!=='spells';$('vBest').hidden=v!=='best';spsig=bsig='';$('vAgents').hidden=v!=='agents';$('vChecks').hidden=v!=='checks';$('vHelp').hidden=v!=='help';$('vGh').hidden=v!=='github';
   document.querySelectorAll('[data-v]').forEach(b=>{const on=b.dataset.v===v;b.classList.toggle('on',on);if(on)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current')});
-  if(v==='checks'){opts();sheet()}}
+  if(v==='checks'){opts();sheet()}
+  render()}
 addEventListener('hashchange',route);
-document.querySelector('.nav').addEventListener('click',e=>{const b=e.target.closest('[data-v]');if(b)location.hash=b.dataset.v});
+document.querySelector('.nav').addEventListener('click',e=>{const b=e.target.closest('[data-v]');if(b)location.hash=b.dataset.v==='best'?'bestiary':b.dataset.v});
 $('cAgent').addEventListener('change',()=>{skillOpts(true);sheet();arenaReset()});
 $('cSkill').addEventListener('change',sheet);
 $('hFilter').addEventListener('change',renderHist);
@@ -863,7 +1051,7 @@ setInterval(()=>{if(live&&!document.hidden)loadBranches(true)},300000);
 let store=null,where='none',autosave=true,saving=false,savedAt='',newArmed=0;
 function sessTxt(t){$('sess').textContent=t||(where==='none'?'saving unavailable here':savedAt?'saved '+savedAt+(where==='db'?' to your account':' in this browser'):'not saved yet')}
 function snapshot(){return {v:1,at:new Date().toISOString(),seq,sel,quest:{i:quest.i,done:quest.done,extra:quest.extra,custom:quest.custom},live,repo:repo(),auto,
-  agents:agents.map(a=>({id:a.id,name:a.name,role:a.role,state:a.state,prev:a.prev||'',ask:a.ask||'',fail:a.fail||'',tasks:a.tasks,tok:a.tok,notes:a.notes,t0:a.t0,think:a.think||0,xp:a.xp,lvl:a.lvl,bonus:a.bonus,gear:a.gear})),
+  agents:agents.map(a=>({id:a.id,name:a.name,role:a.role,state:a.state,prev:a.prev||'',ask:a.ask||'',fail:a.fail||'',tasks:a.tasks,tok:a.tok,notes:a.notes,t0:a.t0,think:a.think||0,xp:a.xp,lvl:a.lvl,bonus:a.bonus,gear:a.gear,su:a.su||0})),mons,mseq,loot,
   hist:hist.slice(0,40).map(x=>({time:x.time,aid:x.a.id,name:x.name,skill:x.skill,r1:x.r1,r2:x.r2,d:x.d,m:x.m,total:x.total,dc:x.dc,mode:x.mode,o:x.o,eff:x.eff||''})),
   log:[...$('log').children].slice(-60).map(li=>li.innerHTML)}}
 async function save(manual){if(saving||where==='none')return;saving=true;sessTxt('saving...');
@@ -872,9 +1060,10 @@ async function save(manual){if(saving||where==='none')return;saving=true;sessTxt
   saving=false}
 async function readSave(){try{if(where==='db'){const s=await store.get();return s.exists?s.data():null}if(where==='local'){const t=localStorage.getItem('bcb-agent-session');return t?JSON.parse(t):null}}catch(e){}return null}
 function restore(s){if(!s||!Array.isArray(s.agents)||!s.agents.length)return false;
-  $('agents').innerHTML='';agents=s.agents.map(x=>Object.assign({},x,{el:null,last:'',reply:'',flash:0,bonus:x.bonus||{},gear:x.gear||['',''],xp:x.xp||0,lvl:x.lvl||1}));
+  $('agents').innerHTML='';agents=s.agents.map(x=>Object.assign({},x,{el:null,last:'',reply:'',flash:0,bonus:x.bonus||{},gear:x.gear||['',''],xp:x.xp||0,lvl:x.lvl||1,su:x.su||0}));
   seq=s.seq||agents.length;sel=agents.some(a=>a.id===s.sel)?s.sel:agents[0].id;quest=Object.assign({i:0,done:0,extra:0,custom:null},s.quest||{},{msg:''});live=s.live&&s.live.repo?s.live:null;liveUI();
   if(s.repo)$('ghRepo').value=s.repo;auto=!!s.auto;$('cAuto').value=auto?'on':'off';
+  if(Array.isArray(s.mons)&&s.mons.length){mons=s.mons;mseq=s.mseq||mons.length;loot=s.loot||[]}else seedMons();
   hist=(s.hist||[]).map(x=>Object.assign({},x,{a:agents.find(a=>a.id===x.aid)})).filter(x=>x.a);
   $('log').innerHTML=(s.log||[]).map(t=>'<li>'+t+'</li>').join('');
   opts.k=null;dsig=nsig=tsig='';render();renderHist();opts();skillOpts(true);sheet();arenaReset();
@@ -936,6 +1125,7 @@ seedRoll(bu,'code',17,16,'write token refresh +20%');
 seedRoll(te,'test',6,15,'unit tests -10%');
 seedRoll(de,'deploy',1,16,'fumbled: agent failed');
 seedRoll(sc,'research',9,13,'read OAuth docs +20%');
+seedMons();te.tasks.push({n:'slay Flaky Test Gremlin',p:0,s:'queued',mon:0});bu.su=1;pl.su=2;
 pl.lvl=4;pl.xp=180;pl.bonus={plan:2,research:1};pl.gear=['board','debugger'];
 bu.lvl=3;bu.xp=120;bu.bonus={test:1,code:1};bu.gear=['debugger','testrun'];
 te.lvl=2;te.xp=60;te.bonus={test:1};de.lvl=2;de.xp=30;de.bonus={deploy:1};re.xp=70;sc.xp=40;

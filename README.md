@@ -13,4 +13,4 @@ A terminal-style control room for agents, built on the **Black Code Bright** des
 - **cheat sheet**: every command, rule and design token
 
 ## Running it
-Open `index.html` in a browser. Opened as a claude.ai artifact, it saves to your account and reads GitHub through your Zapier connection. Opened anywhere else, it saves in the browser and the github screen is read-only demo text.
+Open `index.html` in a browser. Opened as a claude.ai artifact, it saves to your account and reads GitHub through your MCP connection. Opened anywhere else, it saves in the browser and the github screen is read-only demo text.

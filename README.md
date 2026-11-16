@@ -5,6 +5,7 @@ A terminal-style control room for agents, built on the **Black Code Bright** des
 
 ## What's in it
 - `index.html`: the whole dashboard in one self-contained file (no build step)
+- `terminal/`: a Claude Code status line that shows your real session as a party (HP, conditions, subagents, xp). Install with `node terminal/install.js`
 
 ## Screens
 - **agents**: pixel-robot agents, their tasks, notes, token use, and a text box to command them

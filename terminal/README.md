@@ -31,4 +31,4 @@ node terminal/install.js --class wizard   # or wizard, rogue, cleric, paladin, r
 node terminal/install.js --uninstall
 ```
 
-It copies three scripts to `~/.claude/bcb/`, adds the status line and hooks to `~/.claude/settings.json` (keeping your other hooks; a backup goes to `settings.json.bcb-backup`), then you restart Claude Code. The hooks never block Claude and print nothing.
+It copies three scripts to `~/.claude/bcb/`, adds the status line and hooks to `~/.claude/settings.json` (keeping your other hooks; your settings from before the first install are saved to `settings.json.bcb-original`, and `--uninstall` puts back any status line it replaced), then you restart Claude Code. The hooks never block Claude and print nothing.
